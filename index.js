@@ -1,5 +1,3 @@
-
-
 const { inilizeData } = require("./dbconnect/db.connect");
 inilizeData();
 
@@ -8,6 +6,10 @@ const cors = require("cors");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const USER = require("./models/users.model");
+const Task = require("./models/task.model");
+const Team = require("./models/team.model");
+const Project = require("./models/project.model");
+const Tags = require("./models/tags.model");
 
 const app = express();
 app.use(express.json());
@@ -21,7 +23,7 @@ const corsOption = {
 app.use(cors(corsOption));
 
 /* ------------------------
-   Helper: JWT Middleware
+  JWT Middleware
 -------------------------*/
 function authMiddleware(req, res, next) {
   const authHeader = req.headers["authorization"];
@@ -120,11 +122,270 @@ app.post("/auth/login", async (req, res) => {
 /* ------------------------
    Protected Example Route
 -------------------------*/
-app.get("/tasks", authMiddleware, (req, res) => {
-  res.json({
-    message: "Access granted to protected tasks route ✅",
-    userId: req.user,
-  });
+// app.get("/tasks", authMiddleware, (req, res) => {
+//   res.json({
+//     message: "Access granted to protected tasks route ",
+//     userId: req.user,
+//   });
+// });
+
+/* Tasks API  stating*/
+
+// creating tasks
+
+async function addingTasks(tasks) {
+  try {
+    const newTask = Task(tasks);
+    const savedTask = await newTask.save();
+    return savedTask;
+  } catch (error) {
+    console.log("Error:", error);
+  }
+}
+
+app.post("/tasks", async (req, res) => {
+  try {
+    const tasks = await addingTasks(req.body);
+    console.log(tasks);
+    if (tasks) {
+      res.status(201).json({ message: "Task added successfully." });
+    } else {
+      res.status(400).json({ error: "Failed to Add Task" });
+    }
+  } catch (error) {
+    console.log("Error:", error);
+  }
+});
+
+//  Getting the Task
+
+app.get("/tasks", async (req, res) => {
+  const { team, owners, tags, project, status } = req.query;
+  const query = {};
+  if (team) {
+    query.team = team;
+  }
+  if (owners) {
+    query.owners = owners;
+  }
+  if (tags) {
+    query.tags = tags;
+  }
+  if (project) {
+    query.project = project;
+  }
+  if (status) {
+    query.status = status;
+  }
+  const data = await Task.find(query);
+
+  res.json(data);
+});
+
+// Updating the Task
+
+async function updatingTask(TaskId, updateToTask) {
+  try {
+    const updatedTask = await Task.findByIdAndUpdate(TaskId, updateToTask, {
+      new: true,
+    });
+    if (!updateToTask) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+    return updatedTask;
+  } catch (error) {
+    console.log("Error:", error);
+  }
+}
+
+app.post("/tasks/:id", async (req, res) => {
+  try {
+    const modifyTask = await updatingTask(req.params.id, req.body);
+
+    if (modifyTask) {
+      res.status(200).json({ message: "Task Updatd Successfully", modifyTask });
+    } else {
+      res.status(500).json({ error: "Task not Updated", modifyTask });
+    }
+  } catch (error) {
+    console.log("Error:", error);
+  }
+});
+
+//  Deleting the Task Api
+
+async function deletingTask(TaskId) {
+  try {
+    const removedTask = await Task.findByIdAndDelete(TaskId);
+    return removedTask;
+  } catch (error) {
+    console.log("Error:", error);
+  }
+}
+
+app.delete("/tasks/:id", async (req, res) => {
+  try {
+    const deletedTask = await deletingTask(req.params.id);
+
+    if (deletedTask) {
+      res
+        .status(200)
+        .json({ message: "Task Deleted Successfully", deletedTask });
+    } else {
+      res.status(500).json({ error: "Data not deleted yet." });
+    }
+  } catch (error) {
+    console.log("Error:", error);
+  }
+});
+
+/* Tasks API  stating*/
+/* -------------------------------------------- */
+
+/* Team Api's Starting */
+
+// adding Team API
+
+async function addingTeamMember(employee) {
+  try {
+    const empData = Team(employee);
+    const SavedData = await empData.save();
+    return SavedData;
+  } catch (error) {
+    console.log("Error:", error);
+  }
+}
+
+app.post("/teams", async (req, res) => {
+  try {
+    const savedTeam = await addingTeamMember(req.body);
+    if (savedTeam) {
+      res.status(200).json({ message: "Team added Successfully.", savedTeam });
+    } else {
+      res.status(500).json({ error: "Team is not added." });
+    }
+  } catch (error) {
+    console.log("Error:", error);
+  }
+});
+
+//  Get all Teams Data
+
+async function showAllTeams() {
+  try {
+    const allTeams = await Team.find();
+    return allTeams;
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+app.get("/teams", async (req, res) => {
+  try {
+    const Teams = await showAllTeams();
+    if (Teams) {
+      res.status(200).json({ message: "Get all Teams successfully", Teams });
+    } else {
+      res.status(404).json({ error: "Teams not found." });
+    }
+  } catch (error) {
+    console.log("Error:", error);
+  }
+});
+
+/* ---------------------------------------------------*/
+
+// Project API's
+
+async function addingProject(project) {
+  try {
+    const savingproject = Project(project);
+    const savedProject = await savingproject.save();
+
+    return savedProject;
+  } catch (error) {
+    console.log("Error:", error);
+  }
+}
+
+app.post("/projects", async (req, res) => {
+  try {
+    const addedProject = await addingProject(req.body);
+    if (addedProject) {
+      res
+        .status(200)
+        .json({ message: "Project addded Successfuly.", addedProject });
+    } else {
+      res.status(500).json({ error: "Project not added" });
+    }
+  } catch (error) {
+    console.log("Error:", error);
+  }
+});
+
+//  get all Projects
+
+async function showAllProject() {
+  try {
+    const allProjectData = await Project.find();
+    return allProjectData;
+  } catch (error) {
+    console.log("Error:", error);
+  }
+}
+
+app.get("/projects", async (req, res) => {
+  try {
+    const allProject = await showAllProject();
+    if (allProject) {
+      res
+        .status(200)
+        .json({ message: "Projejct found Successfully.", allProject });
+    } else {
+      res.status(404).json({ error: "Projects not found" });
+    }
+  } catch (error) {
+    console.log(error);
+  }
+});
+
+//  tags API's
+
+async function createNewTags(tags) {
+  try {
+    const addingTags = Tags(tags);
+    const savedTags = await addingTags.save();
+    return savedTags;
+  } catch (error) {
+    console.log("Error:", error);
+  }
+}
+
+app.post("/tags", async (req, res) => {
+  try {
+    const addedTags = await createNewTags(req.body);
+
+    if (addedTags) {
+      res
+        .status(200)
+        .json({ message: "Tags created Successfully.", addedTags });
+    } else {
+      res.status(500).json({ error: "Tags not created." });
+    }
+  } catch (error) {
+    console.log("Error:", error);
+  }
+});
+
+/*----------- Report API's ---------------*/
+
+// lastweek API
+
+app.get("/report/last-week", async (req, res) => {
+  try {
+  } catch (error) {
+    console.log("Error:", error);
+  }
 });
 
 /* ------------------------
