@@ -120,14 +120,28 @@ app.post("/auth/login", async (req, res) => {
 });
 
 /* ------------------------
-   Protected Example Route
+   user Route
 -------------------------*/
-// app.get("/tasks", authMiddleware, (req, res) => {
-//   res.json({
-//     message: "Access granted to protected tasks route ",
-//     userId: req.user,
-//   });
-// });
+
+async function getAllUsers() {
+  try {
+    const users = await USER.find();
+    return users;
+  } catch (error) {
+    console.log("Error:", error);
+  }
+}
+
+app.get("/users", async (req, res) => {
+  try {
+    const allUsers = await getAllUsers();
+    if (allUsers) {
+      res.json(allUsers);
+    }
+  } catch (error) {
+    console.log("Error:", error);
+  }
+});
 
 /* Tasks API  stating*/
 
