@@ -146,7 +146,7 @@ async function addingTasks(tasks) {
 app.post("/tasks", async (req, res) => {
   try {
     const tasks = await addingTasks(req.body);
-    console.log(tasks);
+
     if (tasks) {
       res.status(201).json({ message: "Task added successfully." });
     } else {
@@ -284,7 +284,7 @@ app.get("/teams", async (req, res) => {
   try {
     const Teams = await showAllTeams();
     if (Teams) {
-      res.status(200).json({ message: "Get all Teams successfully", Teams });
+      res.status(200).json(Teams);
     } else {
       res.status(404).json({ error: "Teams not found." });
     }
@@ -297,6 +297,7 @@ app.get("/teams", async (req, res) => {
 
 // Project API's
 
+// create new project
 async function addingProject(project) {
   try {
     const savingproject = Project(project);
@@ -338,9 +339,7 @@ app.get("/projects", async (req, res) => {
   try {
     const allProject = await showAllProject();
     if (allProject) {
-      res
-        .status(200)
-        .json({ message: "Projejct found Successfully.", allProject });
+      res.status(200).json(allProject);
     } else {
       res.status(404).json({ error: "Projects not found" });
     }
@@ -377,11 +376,102 @@ app.post("/tags", async (req, res) => {
   }
 });
 
+//  Get all Tags
+
+async function showAllTags() {
+  try {
+    const showTags = await Tags.find();
+    return showTags;
+  } catch (error) {
+    console.log("Error:", error);
+  }
+}
+
+app.get("/tags", async (req, res) => {
+  try {
+    const allTags = await showAllTags();
+    if (allTags) {
+      res.status(200).json(allTags);
+    } else {
+      res.status(404).json({ error: "Tags not found." });
+    }
+  } catch (error) {
+    console.log("Error:", error);
+  }
+});
+
 /*----------- Report API's ---------------*/
 
 // lastweek API
 
+async function getLastWeekTasks() {
+  try {
+    const oneWeekAgo = new Date();
+    oneWeekAgo.setDate(oneWeekAgo, getDate() - 7);
+
+    const tasks = await Task.find({
+      status: "Completed",
+      updatedAt: { $gte: oneWeekAgo },
+    });
+    return tasks;
+  } catch (error) {
+    console.log("Error:", error);
+  }
+}
+
 app.get("/report/last-week", async (req, res) => {
+  try {
+    const lastWeekTasks = await getLastWeekTasks();
+
+    if (lastWeekTasks) {
+      res.status(200).json({
+        message: "Tasks completed in the last 7 days.",
+        count: lastWeekTasks.length,
+        lastWeekTasks,
+      });
+    } else {
+      res.status(404).json({ erorr: "No tasks found" });
+    }
+  } catch (error) {
+    console.log("Error:", error);
+  }
+});
+
+//  Pending Work
+
+async function getPendingReport() {
+  try {
+    const pendingTasks = await Task.find({ status: "Completed" });
+    const totalPendingDays = pendingTasks.reduce(
+      (sum, task) => sum + (task.timeToComplete || 0),
+      0
+    );
+    return { totalPendingDays, pendingTasks };
+  } catch (error) {
+    console.log("Error:", error);
+  }
+}
+
+app.get("/report/pending", async (req, res) => {
+  try {
+    const report = await getPendingReport();
+    if (report) {
+      res.status(200).json({
+        message: "Pending work report",
+        totalPendingDays: report.totalPendingDays,
+        taskCount: report.pendingTasks.length,
+      });
+    } else {
+      res.status(404).json({ error: "No Pending tasks found." });
+    }
+  } catch (error) {
+    console.log("Error:", error);
+  }
+});
+
+//  closed-tasks
+
+app.get("/report/closed-tasks", async (req, res) => {
   try {
   } catch (error) {
     console.log("Error:", error);
