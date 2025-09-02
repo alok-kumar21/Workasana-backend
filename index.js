@@ -174,26 +174,35 @@ app.post("/tasks", async (req, res) => {
 //  Getting the Task
 
 app.get("/tasks", async (req, res) => {
-  const { team, owners, tags, project, status } = req.query;
-  const query = {};
-  if (team) {
-    query.team = team;
-  }
-  if (owners) {
-    query.owners = owners;
-  }
-  if (tags) {
-    query.tags = tags;
-  }
-  if (project) {
-    query.project = project;
-  }
-  if (status) {
-    query.status = status;
-  }
-  const data = await Task.find(query);
+  try {
+    const { team, owners, tags, project, status } = req.query;
+    const query = {};
+    if (team) {
+      query.team = team;
+    }
+    if (owners) {
+      query.owners = owners.split(",");
+    }
+    if (tags) {
+      query.tags = tags;
+    }
+    if (project) {
+      query.project = project;
+    }
+    if (status) {
+      query.status = status;
+    }
+    const data = await Task.find(query)
+      .populate("project")
+      .populate("team")
+      .populate("owners");
 
-  res.json(data);
+    if (data) {
+      console.log(data);
+    }
+  } catch (error) {
+    console.log("Error:", error);
+  }
 });
 
 // Updating the Task
@@ -253,7 +262,7 @@ app.delete("/tasks/:id", async (req, res) => {
   }
 });
 
-/* Tasks API  stating*/
+/* Tasks API  end*/
 /* -------------------------------------------- */
 
 /* Team Api's Starting */

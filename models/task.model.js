@@ -18,7 +18,7 @@ const taskSchema = new mongoose.Schema(
     },
     owners: [
       { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-    ], // refers to user model
+    ],
     tags: [{ type: String }],
     timeToComplete: { type: Number, required: true },
     status: {
