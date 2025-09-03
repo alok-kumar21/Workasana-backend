@@ -198,6 +198,7 @@ app.get("/tasks", async (req, res) => {
       .populate("owners");
 
     if (data) {
+      res.json(data);
       console.log(data);
     }
   } catch (error) {
